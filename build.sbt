@@ -37,6 +37,8 @@ lazy val root = (project in file("."))
       // di
       "com.softwaremill.macwire" %% "macros"                     % "2.5.8" % "provided",
       "com.softwaremill.macwire" %% "util"                       % "2.5.8",
+      // quill
+      "io.getquill"              %% "quill-sql"                  % "4.6.0",
       // logging
       "com.typesafe.akka"        %% "akka-slf4j"                 % AkkaVersion,
       "ch.qos.logback"           % "logback-classic"             % "1.2.11",
