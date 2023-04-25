@@ -2,16 +2,19 @@ package com.joegitau.slick.tables
 
 import com.joegitau.models.User
 import com.joegitau.slick.CustomPostgresProfile.api._
+import eu.timepit.refined.types.numeric.PosLong
 import eu.timepit.refined.types.string.NonEmptyString
 import slick.lifted.ProvenShape
 
 import java.time.Instant
 
 class UserTable(tag: Tag) extends Table[User](tag, "users"){
-  private def id        = column[Option[Long]]("id", O.AutoInc, O.PrimaryKey)
+  def id                = column[Option[PosLong]]("id", O.AutoInc, O.PrimaryKey)
   private def firstName = column[NonEmptyString]("first_name")
   private def lastName  = column[NonEmptyString]("last_name")
   private def email     = column[NonEmptyString]("email")
+  private def password  = column[NonEmptyString]("password")
+  private def username  = column[NonEmptyString]("username")
   private def role      = column[NonEmptyString]("role")
   private def active    = column[Boolean]("active")
   private def created   = column[Instant]("created")  // Option[Instant]
@@ -23,6 +26,8 @@ class UserTable(tag: Tag) extends Table[User](tag, "users"){
     firstName,
     lastName,
     email,
+    password,
+    username,
     role,
     active,
     created.?,
@@ -31,5 +36,5 @@ class UserTable(tag: Tag) extends Table[User](tag, "users"){
 }
 
 object UserTable {
-  lazy val users = TableQuery[UserTable]
+  lazy val Users = TableQuery[UserTable]
 }
