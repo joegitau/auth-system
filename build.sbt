@@ -2,6 +2,7 @@ lazy val AkkaVersion = "2.8.0"
 lazy val SlickVersion = "3.4.1"
 lazy val CirceVersion = "0.14.5"
 lazy val SlickPgVersion = "0.21.1"
+lazy val RefinedVersion = "0.10.3"
 lazy val AkkaHttpVersion = "10.5.0"
 lazy val PostgresqlVersion = "42.5.4"
 
@@ -39,6 +40,9 @@ lazy val root = (project in file("."))
       "com.softwaremill.macwire" %% "util"                       % "2.5.8",
       // quill
       "io.getquill"              %% "quill-sql"                  % "4.6.0",
+      // refined
+      "eu.timepit"               %% "refined"                    % RefinedVersion,
+      "at.favre.lib"             % "bcrypt"                      % "0.10.2",
       // logging
       "com.typesafe.akka"        %% "akka-slf4j"                 % AkkaVersion,
       "ch.qos.logback"           % "logback-classic"             % "1.2.11",
@@ -46,5 +50,13 @@ lazy val root = (project in file("."))
       "com.typesafe.akka"        %% "akka-actor-testkit-typed"   % AkkaVersion % Test,
       "com.typesafe.akka"        %% "akka-stream-testkit"        % AkkaVersion % Test,
       "org.scalatest"            %% "scalatest"                  % "3.2.15"    % Test,
+    ),
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Xfatal-warnings",
+      "-language:higherKinds",
+      "-language:implicitConversions"
     )
   )
