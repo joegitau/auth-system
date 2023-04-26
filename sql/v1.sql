@@ -33,3 +33,12 @@ CREATE TABLE user_role_relations (
     FOREIGN KEY (user_id) REFERENCES users ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles ON DELETE CASCADE
 );
+
+-- role & permissions
+CREATE TABLE role_permission_relations (
+    "role_id"       BIGSERIAL   NOT NULL,
+    "permission_id" BIGSERIAL   NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id)       REFERENCES roles       ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions ON DELETE CASCADE
+);

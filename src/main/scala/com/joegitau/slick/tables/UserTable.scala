@@ -17,8 +17,8 @@ class UserTable(tag: Tag) extends Table[User](tag, "users"){
   private def username  = column[NonEmptyString]("username")
   private def role      = column[NonEmptyString]("role")
   private def active    = column[Boolean]("active")
-  private def created   = column[Instant]("created")  // Option[Instant]
-  private def modified  = column[Instant]("modified") // Option[Instant]
+  private def created   = column[Instant]("created")
+  private def modified  = column[Option[Instant]]("modified")
 
 
   override def * : ProvenShape[User] = (
@@ -30,8 +30,8 @@ class UserTable(tag: Tag) extends Table[User](tag, "users"){
     username,
     role,
     active,
-    created.?,
-    modified.?
+    created,
+    modified
   ) <> (User.tupled, User.unapply)
 }
 

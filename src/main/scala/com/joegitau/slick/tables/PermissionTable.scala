@@ -11,7 +11,7 @@ import java.time.Instant
 class PermissionTable(tag: Tag) extends Table[Permission](tag, "permissions"){
   def id       = column[Option[PosLong]]("id", O.PrimaryKey, O.AutoInc)
   def name     = column[NonEmptyString]("name")
-  def created  = column[Option[Instant]]("created")
+  def created  = column[Instant]("created")
   def modified = column[Option[Instant]]("modified")
 
   override def * : ProvenShape[Permission] = (id, name, created, modified) <> (Permission.tupled, Permission.unapply)

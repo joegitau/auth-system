@@ -12,9 +12,9 @@ class RoleTable(tag: Tag) extends Table[Role](tag, "roles"){
   def id               = column[Option[PosLong]]("id", O.PrimaryKey, O.AutoInc)
   private def name     = column[NonEmptyString]("name")
   private def created  = column[Instant]("created")
-  private def modified = column[Instant]("modified")
+  private def modified = column[Option[Instant]]("modified")
 
-  override def * : ProvenShape[Role] = (id, name, created.?, modified.?) <> (Role.tupled, Role.unapply)
+  override def * : ProvenShape[Role] = (id, name, created, modified) <> (Role.tupled, Role.unapply)
 }
 
 object RoleTable {

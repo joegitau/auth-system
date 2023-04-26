@@ -14,6 +14,6 @@ case class User(
   username:  NonEmptyString,
   role:      NonEmptyString,
   active:    Boolean,
-  created:   Option[Instant] = Some(Instant.now()),
-  modified:  Option[Instant] = None
+  created:   Instant,
+  modified:  Option[Instant]
 ) extends Base
