@@ -7,9 +7,10 @@ import com.joegitau.slick.tables.UserTable.Users
 import com.joegitau.slick.tables.{nonEmptyStringColumnType, posLongColumnType}
 import com.joegitau.utils.BcryptPasswordHasher
 import eu.timepit.refined.types.numeric.PosLong
-import eu.timepit.refined.types.string.NonEmptyString
+import eu.timepit.refined.types.string.{NonEmptyString, TrimmedString}
 
 import java.time.Instant
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 trait UserDAO[F[_]] {
@@ -18,6 +19,13 @@ trait UserDAO[F[_]] {
   def getAll: F[List[User]]
   def update(user: User): F[Option[User]]
   def updatePassword(id: PosLong, newPassword: NonEmptyString): F[String]
+  def getByUsername(username: TrimmedString): F[Option[User]]
+  def getByEmail(email: TrimmedString): F[Option[User]]
+  def updateLastLogin(id: PosLong, lastLogin: Instant): F[String]
+  def updateActivationToken(id: PosLong, token: UUID): F[String]
+  def activateAccount(token: UUID): F[String]
+  def updateResetToken(id: PosLong, token: UUID): F[String]
+  def resetPassword(token: UUID, newPassword: NonEmptyString): F[String]
   def delete(id: PosLong): F[String]
 }
 
@@ -73,4 +81,17 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
   override def delete(id: PosLong): Future[String] =
     db.run(queryById(id).delete).map(_ => s"User successfully deleted!")
 
+  override def getByUsername(username: TrimmedString): Future[Option[User]] = ???
+
+  override def getByEmail(email: TrimmedString): Future[Option[User]] = ???
+
+  override def updateLastLogin(id: PosLong, lastLogin: Instant): Future[String] = ???
+
+  override def updateActivationToken(id: PosLong, token: UUID): Future[String] = ???
+
+  override def activateAccount(token: UUID): Future[String] = ???
+
+  override def updateResetToken(id: PosLong, token: UUID): Future[String] = ???
+
+  override def resetPassword(token: UUID, newPassword: NonEmptyString): Future[String] = ???
 }

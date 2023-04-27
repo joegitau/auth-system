@@ -6,8 +6,9 @@ import eu.timepit.refined.types.string.NonEmptyString
 import java.time.Instant
 
 case class Role(
-  id:       Option[PosLong],
-  name:     NonEmptyString,
-  created:  Instant,
-  modified: Option[Instant]
+  id:          Option[PosLong],
+  name:        NonEmptyString,
+  permissions: List[Permission],
+  created:     Instant,
+  modified:    Option[Instant]
 ) extends Base
