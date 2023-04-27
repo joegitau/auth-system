@@ -12,10 +12,10 @@ import java.time.Instant
 
 object RelationsTable {
   class UserRoleRelationTable(tag: Tag) extends Table[UserRoleRelation](tag, "user_role_relations") {
-    private def userId   = column[PosLong]("user_id")
-    private def roleId   = column[PosLong]("role_id")
-    private def created  = column[Instant]("created")
-    private def modified = column[Option[Instant]]("modified")
+    def userId   = column[PosLong]("user_id")
+    def roleId   = column[PosLong]("role_id")
+    def created  = column[Instant]("created")
+    def modified = column[Option[Instant]]("modified")
 
     def * = (userId, roleId, created, modified) <> (UserRoleRelation.tupled, UserRoleRelation.unapply)
 
@@ -32,10 +32,10 @@ object RelationsTable {
   }
 
   class RolePermissionRelationTable(tag: Tag) extends Table[RolePermissionRelation](tag, "role_permission_relations") {
-    private def roleId       = column[PosLong]("role_id")
-    private def permissionId = column[PosLong]("permission_id")
-    private def created      = column[Instant]("created")
-    private def modified     = column[Option[Instant]]("modified")
+    def roleId       = column[PosLong]("role_id")
+    def permissionId = column[PosLong]("permission_id")
+    def created      = column[Instant]("created")
+    def modified     = column[Option[Instant]]("modified")
 
     def * = (roleId, permissionId, created, modified) <> (RolePermissionRelation.tupled, UserRoleRelation.unapply)
 

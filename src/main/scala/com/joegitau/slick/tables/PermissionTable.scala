@@ -14,7 +14,7 @@ class PermissionTable(tag: Tag) extends Table[Permission](tag, "permissions"){
   def created  = column[Instant]("created")
   def modified = column[Option[Instant]]("modified")
 
-  override def * : ProvenShape[Permission] = (id, name, created, modified) <> (Permission.tupled, Permission.unapply)
+  def * : ProvenShape[Permission] = (id, name, created, modified) <> (Permission.tupled, Permission.unapply)
 }
 
 object PermissionTable {

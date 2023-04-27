@@ -10,16 +10,15 @@ import java.time.Instant
 
 class UserTable(tag: Tag) extends Table[User](tag, "users"){
   def id                = column[Option[PosLong]]("id", O.AutoInc, O.PrimaryKey)
-  private def firstName = column[NonEmptyString]("first_name")
-  private def lastName  = column[NonEmptyString]("last_name")
-  private def email     = column[NonEmptyString]("email")
-  private def password  = column[NonEmptyString]("password")
-  private def username  = column[NonEmptyString]("username")
-  private def role      = column[NonEmptyString]("role")
-  private def active    = column[Boolean]("active")
-  private def created   = column[Instant]("created")
-  private def modified  = column[Option[Instant]]("modified")
-
+  def firstName = column[NonEmptyString]("first_name")
+  def lastName  = column[NonEmptyString]("last_name")
+  def email     = column[NonEmptyString]("email")
+  def password  = column[NonEmptyString]("password")
+  def username  = column[NonEmptyString]("username")
+  def role      = column[NonEmptyString]("role")
+  def active    = column[Boolean]("active")
+  def created   = column[Instant]("created")
+  def modified  = column[Option[Instant]]("modified")
 
   override def * : ProvenShape[User] = (
     id,

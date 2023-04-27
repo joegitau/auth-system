@@ -4,7 +4,8 @@ package dao
 import com.joegitau.models.User
 import com.joegitau.slick.CustomPostgresProfile.api._
 import com.joegitau.slick.tables.UserTable.Users
-import com.joegitau.slick.tables.posLongColumnType
+import com.joegitau.slick.tables.{nonEmptyStringColumnType, posLongColumnType}
+import com.joegitau.utils.BcryptPasswordHasher
 import eu.timepit.refined.types.numeric.PosLong
 import eu.timepit.refined.types.string.NonEmptyString
 
@@ -16,16 +17,23 @@ trait UserDAO[F[_]] {
   def getById(id: PosLong): F[Option[User]]
   def getAll: F[List[User]]
   def update(user: User): F[Option[User]]
+  def updatePassword(id: PosLong, newPassword: NonEmptyString): F[String]
   def delete(id: PosLong): F[String]
-  def updatePassword(id: PosLong, newPassword: NonEmptyString): F[Option[User]]
 }
 
 class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[Future] {
   private def queryById(id: PosLong) = Compiled(Users.filter(_.id === id))
 
   override def insert(user: User): Future[User] = {
-    val action = Users returning Users.map(_.id) into ((user, id) => user.copy(id = id)) += user
-    db.run(action)
+    val hashedPasswordFut = BcryptPasswordHasher.hashPassword(user.password)
+
+    for {
+      hashedPass         <- hashedPasswordFut
+      userWithHashedPass = user.copy(password = NonEmptyString(hashedPass))
+      insertedUser       <- db.run(
+        Users returning Users.map(_.id) into ((user, id) => user.copy(id = id)) += userWithHashedPass
+      )
+    } yield insertedUser
   }
 
   override def getById(id: PosLong): Future[Option[User]] =
@@ -49,8 +57,20 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
     db.run(updateAction)
   }
 
+  override def updatePassword(id: PosLong, newPassword: NonEmptyString): Future[String] = {
+    for {
+      hashedPassword <- BcryptPasswordHasher.hashPassword(newPassword)
+      modified       = Some(Instant.now())
+      _              <- db.run(
+        Users
+          .filter(_.id === id)
+          .map(user => (user.password, user.modified))
+          .update((NonEmptyString(hashedPassword), modified))
+      )
+    } yield "Password updated successfully!"
+  }
+
   override def delete(id: PosLong): Future[String] =
     db.run(queryById(id).delete).map(_ => s"User successfully deleted!")
 
-  override def updatePassword(id: PosLong, newPassword: NonEmptyString): Future[Option[User]] = ???
 }
