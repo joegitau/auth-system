@@ -10,14 +10,14 @@ trait Base {
   def modified: Option[Instant]
 }
 
-case class UserRoleRelation(
+case class UserRole(
   userId:   PosLong,
   roleId:   PosLong,
   created:  Instant,
   modified: Option[Instant]
 ) extends Base
 
-case class RolePermissionRelation(
+case class RolePermission(
   roleId:       PosLong,
   permissionId: PosLong,
   created:      Instant,
