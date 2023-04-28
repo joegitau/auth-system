@@ -1,4 +1,5 @@
-package com.joegitau.slick.tables
+package com.joegitau.slick
+package tables
 
 import com.joegitau.slick.CustomPostgresProfile.api._
 import com.joegitau.models.Permission

@@ -1,4 +1,5 @@
-package com.joegitau.models
+package com.joegitau
+package models
 
 import eu.timepit.refined.types.numeric.PosLong
 
