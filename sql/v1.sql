@@ -15,10 +15,11 @@ CREATE TABLE users (
 );
 
 CREATE TABLE roles (
-    "id"       BIGSERIAL   PRIMARY KEY,
-    "name"     VARCHAR     NOT NULL,
-    "created"  timestamptz DEFAULT CURRENT_TIMESTAMP,
-    "modified" timestamptz
+    "id"          BIGSERIAL   PRIMARY KEY,
+    "name"        VARCHAR     NOT NULL,
+    "permissions" JSONB       NOT NULL,
+    "created"     timestamptz DEFAULT CURRENT_TIMESTAMP,
+    "modified"    timestamptz
 );
 
 CREATE TABLE permissions (

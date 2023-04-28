@@ -7,7 +7,7 @@ import eu.timepit.refined.types.numeric.{PosInt, PosLong}
 import eu.timepit.refined.types.string.{NonEmptyString, TrimmedString}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.parser._
-import io.circe.syntax.EncoderOps
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import slick.ast.BaseTypedType
 
@@ -32,27 +32,39 @@ package object tables {
 
   implicit val trimmedStrColumnType: BaseTypedType[TrimmedString] =
     MappedColumnType.base[TrimmedString, String](
-      ts  => ts.value,
-      str => TrimmedString(str)
+      ts    => ts.value,
+      jsStr => TrimmedString(jsStr)
     )
 
   implicit val roleColumnType: BaseColumnType[Role] =
     MappedColumnType.base[Role, String](
-      role => role.asJson.spaces2,
-      str  => decode[Role](str).getOrElse(throw new InvalidTypeException("Invalid role json"))
+      role  => role.asJson.spaces2,
+      jsStr => decode[Role](jsStr).getOrElse(throw new InvalidTypeException("Invalid [role] json string."))
     )
 
   implicit val roleListColumnType: BaseColumnType[List[Role]] =
     MappedColumnType.base[List[Role], String](
       roles => roles.asJson.spaces2,
-      str   => decode[List[Role]](str).getOrElse(Nil)
+      jsStr => decode[List[Role]](jsStr).getOrElse(Nil)
+    )
+
+  implicit val permissionColumnType: BaseColumnType[Permission] =
+    MappedColumnType.base[Permission, String](
+      perm  => perm.asJson.spaces2,
+      jsStr => decode[Permission](jsStr).getOrElse(throw new InvalidTypeException("Invalid [permission] json string."))
+    )
+
+  implicit val permissionListColumnType: BaseColumnType[List[Permission]] =
+    MappedColumnType.base[List[Permission], String](
+      perms => perms.asJson.spaces2,
+      jsStr => decode[List[Permission]](jsStr).getOrElse(Nil)
     )
 
   // encoders & decoders
-  implicit val roleEncoder: Encoder[Role]             = deriveEncoder[Role]
-  implicit val roleDecoder: Decoder[Role]             = deriveDecoder[Role]
-  implicit val permissionEncoder: Encoder[Permission] = deriveEncoder[Permission]
-  implicit val permissionDecoder: Decoder[Permission] = deriveDecoder[Permission]
+  implicit val roleEncoder: Encoder[Role]             = deriveEncoder
+  implicit val roleDecoder: Decoder[Role]             = deriveDecoder
+  implicit val permissionEncoder: Encoder[Permission] = deriveEncoder
+  implicit val permissionDecoder: Decoder[Permission] = deriveDecoder
 }
 
 /**
