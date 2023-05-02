@@ -13,6 +13,7 @@ trait PermissionDAO[F[_]] {
   def insert(permission: Permission): F[Permission]
   def getById(id: PosLong): F[Option[Permission]]
   def getAll: F[List[Permission]]
+  def update(id: PosLong, newPermission: Permission): F[Option[Permission]]
   def delete(id: PosLong): F[String]
 }
 
@@ -33,5 +34,15 @@ class PermissionDAOImpl(db: Database)(implicit ec: ExecutionContext) extends Per
   override def delete(id: PosLong): Future[String] = {
     db.run(queryById(id).delete)
       .map(_ => s"Successfully deleted permission with id: $id")
+  }
+
+  override def update(id: PosLong, newPermission: Permission): Future[Option[Permission]] = {
+    // query by id
+    // if found, we update it, if not return an option
+    val permToUpdate = queryById(id).result.headOption
+    permToUpdate match {
+      case perm => ???
+
+    }
   }
 }
