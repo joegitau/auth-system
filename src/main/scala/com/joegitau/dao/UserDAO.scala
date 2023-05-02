@@ -4,7 +4,7 @@ package dao
 import com.joegitau.models.User
 import com.joegitau.slick.CustomPostgresProfile.api._
 import com.joegitau.slick.tables.UserTable.Users
-import com.joegitau.slick.tables.{nonEmptyStringColumnType, posLongColumnType}
+import com.joegitau.slick.tables._
 import com.joegitau.utils.BcryptPasswordHasher
 import eu.timepit.refined.types.numeric.PosLong
 import eu.timepit.refined.types.string.{NonEmptyString, TrimmedString}
@@ -32,6 +32,8 @@ trait UserDAO[F[_]] {
 class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[Future] {
   private def queryById(id: PosLong) = Compiled(Users.filter(_.id === id))
 
+  lazy val now: Instant = Instant.now()
+
   override def insert(user: User): Future[User] = {
     val hashedPasswordFut = BcryptPasswordHasher.hashPassword(user.password)
 
@@ -51,29 +53,28 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
     db.run(Users.result).map(_.toList)
 
   override def update(user: User): Future[Option[User]] = {
-    val query = Users.filter(_.id === user.id)
+    val modifiedUser = user.copy(modified = Some(Instant.now))
 
-    val updateAction = query.result.headOption
-      .flatMap {
-        case Some(_) =>
-          query
-            .update(user.copy(modified = Some(Instant.now)))
-            .map(_ => Some(user))
-        case None    => DBIO.successful(None)
-      }
+    val action = for {
+      exists <- Users.filter(_.id === user.id).exists.result
+      result <- if (exists) {
+                  Users.filter(_.id === user.id)
+                    .update(modifiedUser)
+                    .map(_ => Some(modifiedUser))
+                } else DBIO.successful(None)
+    } yield result
 
-    db.run(updateAction)
+    db.run(action.transactionally)
   }
 
   override def updatePassword(id: PosLong, newPassword: NonEmptyString): Future[String] = {
     for {
       hashedPassword <- BcryptPasswordHasher.hashPassword(newPassword)
-      modified       = Some(Instant.now())
       _              <- db.run(
         Users
           .filter(_.id === id)
           .map(user => (user.password, user.modified))
-          .update((NonEmptyString(hashedPassword), modified))
+          .update((NonEmptyString(hashedPassword), Some(now)))
       )
     } yield "Password updated successfully!"
   }
@@ -81,11 +82,25 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
   override def delete(id: PosLong): Future[String] =
     db.run(queryById(id).delete).map(_ => s"User successfully deleted!")
 
-  override def getByUsername(username: TrimmedString): Future[Option[User]] = ???
+  override def getByUsername(username: TrimmedString): Future[Option[User]] =
+    db.run(Users.filter(_.username === username).result.headOption)
 
-  override def getByEmail(email: TrimmedString): Future[Option[User]] = ???
+  override def getByEmail(email: TrimmedString): Future[Option[User]] =
+    db.run(Users.filter(_.email === email).result.headOption)
 
-  override def updateLastLogin(id: PosLong, lastLogin: Instant): Future[String] = ???
+  override def updateLastLogin(id: PosLong, lastLogin: Instant): Future[String] = {
+    val action = for {
+      exists <- Users.filter(_.id === id).exists.result
+      result <- if (exists) {
+                    Users.filter(_.id === id)
+                      .map(u => (u.lastLogin, u.modified))
+                      .update(Some(lastLogin), Some(now))
+                      .map(_ => s"Successfully modified last login for user with id: $id")
+                } else DBIO.successful(s"User with id: $id not found!")
+    } yield result
+
+    db.run(action.transactionally)
+  }
 
   override def updateActivationToken(id: PosLong, token: UUID): Future[String] = ???
 
