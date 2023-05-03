@@ -21,9 +21,9 @@ trait UserDAO[F[_]] {
   def updatePassword(id: PosLong, newPassword: NonEmptyString): F[String]
   def getByUsername(username: TrimmedString): F[Option[User]]
   def getByEmail(email: TrimmedString): F[Option[User]]
+  def activateAccount(token: UUID): F[String]
   def updateLastLogin(id: PosLong, lastLogin: Instant): F[String]
   def updateActivationToken(id: PosLong, token: UUID): F[String]
-  def activateAccount(token: UUID): F[String]
   def updateResetToken(id: PosLong, token: UUID): F[String]
   def resetPassword(token: UUID, newPassword: NonEmptyString): F[String]
   def delete(id: PosLong): F[String]
@@ -52,6 +52,12 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
   override def getAll: Future[List[User]] =
     db.run(Users.result).map(_.toList)
 
+  override def getByUsername(username: TrimmedString): Future[Option[User]] =
+    db.run(Users.filter(_.username === username).result.headOption)
+
+  override def getByEmail(email: TrimmedString): Future[Option[User]] =
+    db.run(Users.filter(_.email === email).result.headOption)
+
   override def update(user: User): Future[Option[User]] = {
     val modifiedUser = user.copy(modified = Some(Instant.now))
 
@@ -71,42 +77,98 @@ class UserDAOImpl(db: Database)(implicit ec: ExecutionContext) extends UserDAO[F
     for {
       hashedPassword <- BcryptPasswordHasher.hashPassword(newPassword)
       _              <- db.run(
-        Users
-          .filter(_.id === id)
-          .map(user => (user.password, user.modified))
-          .update((NonEmptyString(hashedPassword), Some(now)))
-      )
+                          Users
+                            .filter(_.id === id)
+                            .map(user => (user.password, user.modified))
+                            .update((NonEmptyString(hashedPassword), Some(now)))
+                        )
     } yield "Password updated successfully!"
   }
-
-  override def delete(id: PosLong): Future[String] =
-    db.run(queryById(id).delete).map(_ => s"User successfully deleted!")
-
-  override def getByUsername(username: TrimmedString): Future[Option[User]] =
-    db.run(Users.filter(_.username === username).result.headOption)
-
-  override def getByEmail(email: TrimmedString): Future[Option[User]] =
-    db.run(Users.filter(_.email === email).result.headOption)
 
   override def updateLastLogin(id: PosLong, lastLogin: Instant): Future[String] = {
     val action = for {
       exists <- Users.filter(_.id === id).exists.result
       result <- if (exists) {
-                    Users.filter(_.id === id)
-                      .map(u => (u.lastLogin, u.modified))
-                      .update(Some(lastLogin), Some(now))
-                      .map(_ => s"Successfully modified last login for user with id: $id")
-                } else DBIO.successful(s"User with id: $id not found!")
+                      Users
+                        .filter(_.id === id)
+                        .map(u => (u.lastLogin, u.modified))
+                        .update(Some(lastLogin), Some(now))
+                        .map(_ => s"Successfully modified last login for user with id: $id")
+                  } else DBIO.successful(s"User with id: $id not found!")
     } yield result
 
     db.run(action.transactionally)
   }
 
-  override def updateActivationToken(id: PosLong, token: UUID): Future[String] = ???
+  override def resetPassword(token: UUID, newPassword: NonEmptyString): Future[String] = {
+    val query = for {
+      user <- Users if user.activationToken === token
+    } yield (user.activationToken, user.password, user.modified)
 
-  override def activateAccount(token: UUID): Future[String] = ???
+    BcryptPasswordHasher.hashPassword(newPassword)
+      .flatMap { hashedPass =>
+        db.run(query.update((Some(token), NonEmptyString(hashedPass), Some(now))))
+      }
+      .map(_ => s"Password successfully reset!")
+  }
 
-  override def updateResetToken(id: PosLong, token: UUID): Future[String] = ???
+  override def activateAccount(token: UUID): Future[String] = {
+    val query = for {
+      user <- Users if user.activationToken === token
+    } yield (user.active, user.activationToken, user.modified)
 
-  override def resetPassword(token: UUID, newPassword: NonEmptyString): Future[String] = ???
+    val action = query.update((true, None, Some(now)))
+
+    db.run(action).map(_ => "Account successfully activated!")
+  }
+
+  override def updateActivationToken(id: PosLong, token: UUID): Future[String] = {
+    val action = for {
+      exists <- Users.filter(_.id === id).exists.result
+      result <- if (exists) {
+                  Users
+                    .filter(_.id === id)
+                    .map(u => (u.activationToken, u.modified))
+                    .update(Some(token), Some(now))
+                    .map(_ => s"Successfully updated activation token for user with id: $id")
+                } else DBIO.successful("")
+    } yield result
+
+    db.run(action.transactionally)
+  }
+
+  override def updateResetToken(id: PosLong, token: UUID): Future[String] = {
+    val action = for {
+      exists <- Users.filter(_.id === id).exists.result
+      result <- if (exists) {
+                  Users
+                    .filter(_.id === id)
+                    .map(u => (u.resetToken, u.modified))
+                    .update(Some(token), Some(now))
+                    .map(_ => s"Successfully updated reset token for user with id: $id")
+                } else DBIO.successful("")
+    } yield result
+
+    db.run(action.transactionally)
+  }
+
+  override def delete(id: PosLong): Future[String] =
+    db.run(queryById(id).delete).map(_ => s"User successfully deleted!")
+
+  // could be helpful!!
+  private def getByActivationToken(token: UUID): Future[Option[User]] = {
+    val query = for {
+      user <- Users if user.activationToken === token
+    } yield user
+
+    db.run(query.result.headOption)
+  }
+
+  private def getByResetToken(token: UUID): Future[Option[User]] = {
+    val query = for {
+      user <- Users if user.resetToken === token
+    } yield user
+
+    db.run(query.result.headOption)
+  }
 }
